@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dispatch Dashboard</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        .dashboard-container { display: flex; height: 100vh; width: 100vw; background-color: #f8fafc; }
+        #map { flex: 2; height: 100%; z-index: 1; }
+        #panel { flex: 1; height: 100%; z-index: 10; overflow-y: auto; }
+        
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <div class="dashboard-container">
+        <div id="map" class="shadow-[inset_-10px_0_15px_-10px_rgba(0,0,0,0.1)]"></div>
+
+        <div id="panel" class="bg-white flex flex-col border-l border-slate-200">
+            <div class="bg-slate-900 px-8 py-6 text-white shadow-md z-20">
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Live System</p>
+                </div>
+                <h1 class="text-2xl font-black tracking-tight">AI Dispatch System</h1>
+                <p class="text-sm font-medium text-slate-400 mt-1 uppercase tracking-widest">Taipei Sector</p>
+            </div>
+
+            <div id="info-content" class="p-8 flex-grow bg-slate-50 relative">
+                <div class="h-full flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-sm border border-slate-200 flex items-center justify-center mb-4 text-slate-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-700 mb-2">Awaiting Target Selection</h2>
+                    <p class="text-sm text-slate-500 max-w-[250px]">Click on any highlighted household on the map to view detailed AI assessments.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // --- 1. 資料區 (模擬的 GeoJSON) ---
+
+        // 台北市簡化邊界 (Boundary)
+        const taipeiBoundary = {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "properties": { "name": "Taipei City Sector" },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[
+                        [121.46, 25.12], [121.54, 25.19], [121.58, 25.17], 
+                        [121.62, 25.10], [121.65, 25.04], [121.61, 24.98], 
+                        [121.58, 24.96], [121.53, 24.98], [121.49, 25.01], 
+                        [121.46, 25.06], [121.46, 25.12]
+                    ]]
+                }
+            }]
+        };
+
+        // 擴充的 7 個家戶點位
+        const householdData = {
+            "type": "FeatureCollection",
+            "features": [
+                { "type": "Feature", "properties": { "id": "TP-001", "district": "Wenshan", "vulnerability_score": 5, "members": 3, "needs": "Medical Evacuation", "phone": "0912-345-678" }, "geometry": { "type": "Point", "coordinates": [121.565, 24.985] } },
+                { "type": "Feature", "properties": { "id": "TP-002", "district": "Wenshan", "vulnerability_score": 2, "members": 4, "needs": "Sandbags", "phone": "0922-111-222" }, "geometry": { "type": "Point", "coordinates": [121.558, 24.988] } },
+                { "type": "Feature", "properties": { "id": "TP-003", "district": "Xinyi", "vulnerability_score": 4, "members": 5, "needs": "Drinking Water", "phone": "0933-444-555" }, "geometry": { "type": "Point", "coordinates": [121.570, 25.033] } },
+                { "type": "Feature", "properties": { "id": "TP-004", "district": "Daan", "vulnerability_score": 3, "members": 2, "needs": "Food Rations", "phone": "0944-555-666" }, "geometry": { "type": "Point", "coordinates": [121.543, 25.026] } },
+                { "type": "Feature", "properties": { "id": "TP-005", "district": "Nangang", "vulnerability_score": 5, "members": 6, "needs": "Rescue Boat, Medical", "phone": "0955-666-777" }, "geometry": { "type": "Point", "coordinates": [121.605, 25.055] } },
+                { "type": "Feature", "properties": { "id": "TP-006", "district": "Zhongzheng", "vulnerability_score": 1, "members": 2, "needs": "None (Safe)", "phone": "0966-777-888" }, "geometry": { "type": "Point", "coordinates": [121.518, 25.032] } },
+                { "type": "Feature", "properties": { "id": "TP-007", "district": "Neihu", "vulnerability_score": 4, "members": 4, "needs": "Power Generator", "phone": "0977-888-999" }, "geometry": { "type": "Point", "coordinates": [121.590, 25.083] } }
+            ]
+        };
+
+        // --- 2. 地圖初始化 ---
+        const map = L.map('map').setView([25.040, 121.550], 12);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CARTO'
+        }).addTo(map);
+
+        // 加入台北市邊界 (淺藍色虛線框)
+        L.geoJSON(taipeiBoundary, {
+            style: { color: '#3b82f6', weight: 3, opacity: 0.6, fillOpacity: 0.05, dashArray: '8, 8' }
+        }).addTo(map);
+
+        // --- 3. 核心邏輯與互動 ---
+        function getScoreColor(score) {
+            if (score === 5) return { hex: '#ef4444', text: 'text-red-500', bg: 'bg-red-50', border: 'border-red-200' };
+            if (score === 4) return { hex: '#f97316', text: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-200' };
+            if (score === 3) return { hex: '#eab308', text: 'text-yellow-500', bg: 'bg-yellow-50', border: 'border-yellow-200' };
+            return { hex: '#10b981', text: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200' };
+        }
+
+        // 重設面板的函數
+        function resetPanel() {
+            document.getElementById('info-content').innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-sm border border-slate-200 flex items-center justify-center mb-4 text-slate-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-700 mb-2">Awaiting Target Selection</h2>
+                    <p class="text-sm text-slate-500 max-w-[250px]">Click on any highlighted household on the map to view detailed AI assessments.</p>
+                </div>
+            `;
+            map.setView([25.040, 121.550], 12); // 回到預設視角
+        }
+
+        L.geoJSON(householdData, {
+            pointToLayer: function (feature, latlng) {
+                const style = getScoreColor(feature.properties.vulnerability_score);
+                return L.circleMarker(latlng, {
+                    radius: 10,
+                    fillColor: style.hex,
+                    color: "#ffffff", weight: 3, fillOpacity: 1
+                });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.on('click', function() {
+                    const props = feature.properties;
+                    const panel = document.getElementById('info-content');
+                    const style = getScoreColor(props.vulnerability_score);
+                    
+                    // 更現代、更有層次感的卡片設計
+                    panel.innerHTML = `
+                        <div class="animate-in slide-in-from-right-4 duration-300">
+                            <button onclick="resetPanel()" class="mb-6 text-sm font-semibold text-slate-400 hover:text-slate-700 flex items-center gap-1 transition-colors">
+                                &larr; Back to overview
+                            </button>
+
+                            <div class="flex justify-between items-start mb-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                                <div>
+                                    <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Target ID</p>
+                                    <h2 class="text-3xl font-black text-slate-900">${props.id}</h2>
+                                </div>
+                                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-xl border-2 ${style.bg} ${style.border}">
+                                    <span class="text-2xl font-black ${style.text} leading-none">${props.vulnerability_score}</span>
+                                    <span class="text-[10px] font-bold ${style.text} opacity-70 mt-0.5">SCORE</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                                    <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                                    <p class="text-base font-bold text-slate-700">${props.district}</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                                    <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Members</p>
+                                    <p class="text-base font-bold text-slate-700">${props.members} People</p>
+                                </div>
+                            </div>
+
+                            <div class="p-5 rounded-2xl shadow-sm border mb-4 ${style.bg} ${style.border}">
+                                <p class="text-[10px] font-extrabold uppercase tracking-widest mb-1 ${style.text} opacity-80">Immediate Needs</p>
+                                <p class="text-xl font-black ${style.text}">${props.needs}</p>
+                            </div>
+
+                            <div class="bg-slate-800 p-5 rounded-2xl shadow-inner text-white">
+                                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2">Field Notes / Contact</p>
+                                <p class="text-sm font-medium text-slate-300">Phone: ${props.phone}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 點擊時，地圖平滑移動並放大到該點位
+                    map.flyTo(layer.getLatLng(), 15, { duration: 0.6 });
+                });
+            }
+        }).addTo(map);
+    </script>
+</body>
+</html>
