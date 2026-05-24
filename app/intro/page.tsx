@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 
 const slides = [
   {
@@ -206,17 +207,9 @@ const slides = [
           <h2 className="text-5xl font-bold text-white">Real examples</h2>
           <p className="text-slate-500 text-sm mt-2">Click any card to explore →</p>
         </div>
-
-        {/* Bento grid — 3 col × 2 row */}
         <div className="w-full max-w-3xl grid grid-cols-3 gap-3" style={{ gridTemplateRows: 'auto auto' }}>
-
-          {/* ── FEATURED: Your project — spans 2 cols, row 1 ── */}
-          <a
-            href="https://taipei-tod-map.zeabur.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="col-span-2 bg-slate-900 border border-sky-500/40 rounded-2xl p-6 text-left hover:border-sky-400 hover:bg-slate-800/60 transition-all group relative overflow-hidden"
-          >
+          <a href="https://taipei-tod-map.zeabur.app/" target="_blank" rel="noopener noreferrer"
+            className="col-span-2 bg-slate-900 border border-sky-500/40 rounded-2xl p-6 text-left hover:border-sky-400 hover:bg-slate-800/60 transition-all group relative overflow-hidden">
             <div className="absolute top-4 right-4 text-xs tracking-widest text-sky-400 uppercase font-bold bg-sky-950/60 border border-sky-500/30 rounded-full px-3 py-1">
               Built with WebGIS
             </div>
@@ -227,14 +220,8 @@ const slides = [
             </p>
             <p className="text-slate-600 text-xs group-hover:text-sky-400 transition-colors mt-4">taipei-tod-map.zeabur.app ↗</p>
           </a>
-
-          {/* ── Google Maps — col 3, row 1 ── */}
-          <a
-            href="https://maps.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between"
-          >
+          <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer"
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between">
             <div>
               <p className="text-xs tracking-widest text-slate-400 uppercase font-semibold mb-2">Everyday WebGIS</p>
               <p className="text-white font-semibold mb-2">Google Maps</p>
@@ -244,14 +231,8 @@ const slides = [
             </div>
             <p className="text-slate-700 text-xs group-hover:text-sky-400 transition-colors mt-3">maps.google.com ↗</p>
           </a>
-
-          {/* ── Johns Hopkins — col 1, row 2 ── */}
-          <a
-            href="https://coronavirus.jhu.edu/map.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between"
-          >
+          <a href="https://coronavirus.jhu.edu/map.html" target="_blank" rel="noopener noreferrer"
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between">
             <div>
               <p className="text-xs tracking-widest text-slate-400 uppercase font-semibold mb-2">Public Health</p>
               <p className="text-white font-semibold mb-2">JHU COVID-19 Dashboard</p>
@@ -261,14 +242,8 @@ const slides = [
             </div>
             <p className="text-slate-700 text-xs group-hover:text-sky-400 transition-colors mt-3">coronavirus.jhu.edu ↗</p>
           </a>
-
-          {/* ── Global Forest Watch — col 2, row 2 ── */}
-          <a
-            href="https://www.globalforestwatch.org/map/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between"
-          >
+          <a href="https://www.globalforestwatch.org/map/" target="_blank" rel="noopener noreferrer"
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between">
             <div>
               <p className="text-xs tracking-widest text-slate-400 uppercase font-semibold mb-2">Environment</p>
               <p className="text-white font-semibold mb-2">Global Forest Watch</p>
@@ -278,14 +253,8 @@ const slides = [
             </div>
             <p className="text-slate-700 text-xs group-hover:text-sky-400 transition-colors mt-3">globalforestwatch.org ↗</p>
           </a>
-
-          {/* ── Kepler.gl — col 3, row 2 ── */}
-          <a
-            href="https://kepler.gl/demo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between"
-          >
+          <a href="https://kepler.gl/demo" target="_blank" rel="noopener noreferrer"
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left hover:border-slate-600 hover:bg-slate-800/60 transition-all group flex flex-col justify-between">
             <div>
               <p className="text-xs tracking-widest text-slate-400 uppercase font-semibold mb-2">Data Viz</p>
               <p className="text-white font-semibold mb-2">Kepler.gl by Uber</p>
@@ -295,7 +264,6 @@ const slides = [
             </div>
             <p className="text-slate-700 text-xs group-hover:text-sky-400 transition-colors mt-3">kepler.gl ↗</p>
           </a>
-
         </div>
       </div>
     ),
@@ -328,7 +296,13 @@ const slides = [
             </div>
           ))}
         </div>
-        <p className="text-slate-600 text-sm mt-4">Let's start building →</p>
+        {/* ── CTA: start building ── */}
+        <Link
+          href="/simple"
+          className="mt-2 inline-flex items-center gap-2 px-8 py-3 bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-white text-sm font-bold rounded-xl transition-all"
+        >
+          Start Building →
+        </Link>
       </div>
     ),
   },
@@ -362,15 +336,24 @@ export default function IntroPage() {
   }, [current, goTo])
 
   const progress = ((current + 1) / slides.length) * 100
+  const isLast = current === slides.length - 1
 
   return (
     <div className="fixed inset-0 bg-slate-950 flex flex-col">
+      {/* Progress bar */}
       <div
         className="absolute top-0 left-0 h-[2px] bg-sky-500 transition-all duration-500 ease-out z-50"
         style={{ width: `${progress}%` }}
       />
+
+      {/* ── Top bar ── */}
       <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 h-14 z-40">
-        <span className="text-xs text-slate-600 tracking-widest uppercase font-medium">WebGIS Workshop</span>
+        <Link
+          href="/"
+          className="text-xs text-slate-600 tracking-widest uppercase font-medium hover:text-slate-400 transition-colors"
+        >
+          ← WebGIS Workshop
+        </Link>
         {slides[current].label && (
           <span className="text-xs text-slate-600 tracking-widest uppercase">{slides[current].label}</span>
         )}
@@ -379,6 +362,7 @@ export default function IntroPage() {
         </span>
       </div>
 
+      {/* ── Slide content ── */}
       <div className="flex-1 flex items-center justify-center px-16 py-20">
         <div
           className="w-full max-w-4xl h-full flex items-center justify-center"
@@ -394,7 +378,9 @@ export default function IntroPage() {
         </div>
       </div>
 
+      {/* ── Bottom bar ── */}
       <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-8 h-14 z-40">
+        {/* Dot indicators */}
         <div className="flex gap-1.5 items-center">
           {slides.map((_, i) => (
             <button
@@ -409,17 +395,29 @@ export default function IntroPage() {
             />
           ))}
         </div>
-        <div className="flex gap-2">
+
+        {/* Nav buttons */}
+        <div className="flex gap-2 items-center">
           <button
             onClick={() => goTo(current - 1)}
             disabled={current === 0}
             className="w-9 h-9 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-600 disabled:opacity-20 transition-all text-sm"
           >←</button>
-          <button
-            onClick={() => goTo(current + 1)}
-            disabled={current === slides.length - 1}
-            className="w-9 h-9 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-600 disabled:opacity-20 transition-all text-sm"
-          >→</button>
+
+          {/* Last slide: replace → with "Start Building" */}
+          {isLast ? (
+            <Link
+              href="/simple"
+              className="h-9 px-4 rounded-lg border border-sky-500 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all flex items-center"
+            >
+              Start Building →
+            </Link>
+          ) : (
+            <button
+              onClick={() => goTo(current + 1)}
+              className="w-9 h-9 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-600 transition-all text-sm"
+            >→</button>
+          )}
         </div>
       </div>
     </div>
