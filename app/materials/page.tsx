@@ -251,41 +251,80 @@ const TYPE_ICON: Record<string, string> = {
 
 export default function MaterialsPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const displayed = activeCategory
     ? CATEGORIES.filter(c => c.id === activeCategory)
     : CATEGORIES;
 
+  const activeLabel = activeCategory
+    ? CATEGORIES.find(c => c.id === activeCategory)?.label
+    : "All";
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
 
       {/* ── Header ── */}
-      <header className="flex items-center justify-between px-16 h-14 border-b border-stone-200">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-sm font-black tracking-tight text-stone-900 hover:text-stone-500 transition-colors">
+      <header className="flex items-center justify-between px-4 md:px-16 h-12 md:h-14 border-b border-stone-200">
+        <div className="flex items-center gap-2 md:gap-6 min-w-0">
+          <Link href="/" className="text-sm font-black tracking-tight text-stone-900 hover:text-stone-500 transition-colors whitespace-nowrap">
             WebGIS Workshop
           </Link>
           <span className="text-stone-300">/</span>
-          <span className="text-sm text-stone-400">Materials</span>
+          <span className="text-sm text-stone-400 truncate">Materials</span>
         </div>
-        <Link href="/" className="text-sm text-stone-400 hover:text-stone-900 transition-colors">← Home</Link>
+        <Link href="/" className="text-sm text-stone-400 hover:text-stone-900 transition-colors whitespace-nowrap ml-4">← Home</Link>
       </header>
 
-      <main className="max-w-screen-xl mx-auto px-16 py-16">
+      <main className="max-w-screen-xl mx-auto px-4 md:px-16 py-8 md:py-16">
 
         {/* ── Hero ── */}
-        <div className="flex items-end justify-between mb-14 gap-8">
-          <div className="space-y-3">
+        <div className="mb-8 md:mb-14">
+          {/* Title row */}
+          <div className="space-y-2 md:space-y-3 mb-6 md:mb-8">
             <p className="text-xs text-stone-400 uppercase tracking-widest font-semibold">Learning Path</p>
-            <h1 className="text-6xl font-black tracking-tight leading-none">Materials</h1>
-            <p className="text-base text-stone-400 max-w-lg leading-relaxed">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none">Materials</h1>
+            <p className="text-sm md:text-base text-stone-400 max-w-lg leading-relaxed">
               Everything you need to go from a single HTML file to a production-grade WebGIS application.
               Organized by skill area — start from the top.
             </p>
           </div>
-          <div className="flex-shrink-0 text-right">
+
+          {/* Filter — desktop: inline row / mobile: collapsible dropdown */}
+          <div>
             <p className="text-xs text-stone-400 mb-2 uppercase tracking-widest">Filter by area</p>
-            <div className="flex flex-wrap gap-2 justify-end">
+
+            {/* Mobile: toggle button + dropdown */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setFilterOpen(v => !v)}
+                className="flex items-center justify-between w-full px-3 py-2 border border-stone-300 text-sm font-semibold text-stone-700 bg-white"
+              >
+                <span>{activeLabel}</span>
+                <span className={`transition-transform duration-200 ${filterOpen ? "rotate-180" : ""}`}>▾</span>
+              </button>
+              {filterOpen && (
+                <div className="border border-t-0 border-stone-200 bg-white divide-y divide-stone-100">
+                  <button
+                    onClick={() => { setActiveCategory(null); setFilterOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 text-sm font-semibold transition-colors
+                      ${!activeCategory ? "bg-stone-900 text-white" : "text-stone-500 hover:bg-stone-50"}`}>
+                    All
+                  </button>
+                  {CATEGORIES.map(c => (
+                    <button key={c.id}
+                      onClick={() => { setActiveCategory(activeCategory === c.id ? null : c.id); setFilterOpen(false); }}
+                      className={`w-full text-left px-3 py-2.5 text-sm font-semibold transition-colors
+                        ${activeCategory === c.id ? "bg-stone-900 text-white" : "text-stone-500 hover:bg-stone-50"}`}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop: pill row */}
+            <div className="hidden md:flex flex-wrap gap-2">
               <button
                 onClick={() => setActiveCategory(null)}
                 className={`px-3 py-1.5 text-xs font-semibold border transition-colors rounded-none
@@ -305,28 +344,32 @@ export default function MaterialsPage() {
         </div>
 
         {/* ── Categories ── */}
-        <div className="space-y-16">
+        <div className="space-y-10 md:space-y-16">
           {displayed.map((cat) => (
             <section key={cat.id}>
-              {/* Category header — icon removed from h2, kept only text */}
-              <div className="flex items-baseline gap-6 mb-8 pb-4 border-b border-stone-200">
-                <div className="flex items-baseline gap-3">
-                  <h2 className="text-2xl font-black tracking-tight">{cat.label}</h2>
-                  <p className="text-sm text-stone-400">{cat.tagline}</p>
+              {/* Category header */}
+              <div className="mb-5 md:mb-8 pb-3 md:pb-4 border-b border-stone-200">
+                <div className="flex items-baseline gap-2 md:gap-3 flex-wrap">
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight">{cat.label}</h2>
+                  <p className="text-xs md:text-sm text-stone-400">{cat.tagline}</p>
                 </div>
-                <p className="text-xs text-stone-300 ml-auto max-w-sm text-right leading-relaxed hidden lg:block">
+                {/* Description — visible on all sizes but smaller on mobile */}
+                <p className="text-xs text-stone-400 mt-2 leading-relaxed md:hidden">
+                  {cat.description}
+                </p>
+                <p className="text-xs text-stone-300 mt-2 max-w-sm leading-relaxed hidden lg:block">
                   {cat.description}
                 </p>
               </div>
 
-              {/* Skills grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {/* Skills grid — 1 col mobile, 2 col md, 3 col xl */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                 {cat.skills.map(skill => (
                   <div key={skill.name} className="border border-stone-200 bg-white flex flex-col">
                     {/* Skill header */}
-                    <div className="px-6 py-5 border-b border-stone-100">
+                    <div className="px-4 md:px-6 py-4 md:py-5 border-b border-stone-100">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="text-lg font-black tracking-tight">{skill.name}</h3>
+                        <h3 className="text-base md:text-lg font-black tracking-tight">{skill.name}</h3>
                         <span className={`text-[10px] font-bold px-2 py-1 border flex-shrink-0 ${LEVEL_COLOR[skill.levelColor]}`}>
                           {skill.level}
                         </span>
@@ -335,23 +378,23 @@ export default function MaterialsPage() {
                     </div>
 
                     {/* Resources */}
-                    <div className="flex-1 px-6 py-4 space-y-2">
+                    <div className="flex-1 px-4 md:px-6 py-3 md:py-4 space-y-1.5 md:space-y-2">
                       {skill.resources.map((r, i) => (
                         <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
-                          className="flex items-start gap-3 group p-2 -mx-2 hover:bg-stone-50 transition-colors">
+                          className="flex items-start gap-2 md:gap-3 group p-2 -mx-2 hover:bg-stone-50 transition-colors rounded">
                           <span className="text-[11px] mt-0.5 flex-shrink-0 text-stone-300 group-hover:text-stone-500 transition-colors">
                             {TYPE_ICON[r.type]}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-stone-700 group-hover:text-stone-900 transition-colors leading-snug">
+                            <p className="text-xs md:text-sm font-medium text-stone-700 group-hover:text-stone-900 transition-colors leading-snug">
                               {r.label}
                             </p>
-                            <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center gap-1.5 md:gap-2 mt-0.5 flex-wrap">
                               <span className="text-[10px] text-stone-400">{r.author}</span>
-                              {(r as any).duration && (
+                              {(r as { duration?: string }).duration && (
                                 <>
                                   <span className="text-stone-200">·</span>
-                                  <span className="text-[10px] text-stone-400">{(r as any).duration}</span>
+                                  <span className="text-[10px] text-stone-400">{(r as { duration?: string }).duration}</span>
                                 </>
                               )}
                             </div>
@@ -368,7 +411,7 @@ export default function MaterialsPage() {
         </div>
 
         {/* ── Footer note ── */}
-        <div className="mt-20 pt-8 border-t border-stone-200 flex items-center justify-between">
+        <div className="mt-12 md:mt-20 pt-6 md:pt-8 border-t border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <p className="text-xs text-stone-300">
             All resources are free or have free tiers. No affiliation.
           </p>
