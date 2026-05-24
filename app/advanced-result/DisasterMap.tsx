@@ -173,7 +173,7 @@ export default function DisasterMap() {
       const topo = taiwan as TopoJSON;
       const key  = Object.keys(topo.objects)[0];
       // Double-cast via unknown to bypass TS overload mismatch
-      const fc = topojson.feature(topo, topo.objects[key]) as unknown as FeatureCollection;
+      const fc = (topojson.feature as unknown as (t: unknown, o: unknown) => unknown)(topo, topo.objects[key]) as FeatureCollection;
       setTaiwanData(fc);
       setDebrisData(debris); setTaipeiFlood(tF); setNewTaipeiFlood(ntF);
       setLoading(false);
