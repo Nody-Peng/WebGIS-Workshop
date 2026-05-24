@@ -10,7 +10,6 @@ import * as topojson from "topojson-client";
 type RiskLevel = "Critical" | "High" | "Moderate" | "Low";
 type CityTag   = "Taipei" | "New Taipei";
 
-// Use a loose type to avoid depending on topojson-specification package
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TopoJSON = Record<string, any>;
 
@@ -173,8 +172,9 @@ export default function DisasterMap() {
     ]).then(([debris,tF,ntF,taiwan])=>{
       const topo = taiwan as TopoJSON;
       const key  = Object.keys(topo.objects)[0];
-      // Cast through unknown to satisfy the topojson.feature overload
-      setTaiwanData(topojson.feature(topo as unknown as Parameters<typeof topojson.feature>[0], topo.objects[key]) as FeatureCollection);
+      // Double-cast via unknown to bypass TS overload mismatch
+      const fc = topojson.feature(topo, topo.objects[key]) as unknown as FeatureCollection;
+      setTaiwanData(fc);
       setDebrisData(debris); setTaipeiFlood(tF); setNewTaipeiFlood(ntF);
       setLoading(false);
     }).catch(e=>{ setError(e.message); setLoading(false); });
