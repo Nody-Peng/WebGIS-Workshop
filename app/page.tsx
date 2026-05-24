@@ -3,10 +3,41 @@
 import Link from "next/link";
 
 const MODULES = [
-  { href: "/intro",     num: "01", title: "Introduction",      desc: "WebGIS concepts & real-world case studies" },
-  { href: "/simple",    num: "02", title: "Hands-on Practice", desc: "Build an interactive map from scratch" },
-  { href: "/advanced",  num: "03", title: "Advanced Pathway",  desc: "React, Next.js, PostGIS & Vercel deployment" },
-  { href: "/materials", num: "04", title: "Learning Materials","desc": "Datasets, tools, docs & references" },
+  {
+    href: "/intro",
+    num: "01",
+    title: "Introduction",
+    desc: "WebGIS concepts & real-world case studies",
+    result: null,
+  },
+  {
+    href: "/simple",
+    num: "02",
+    title: "Hands-on Practice",
+    desc: "Build an interactive map from scratch",
+    result: { href: "/simple-result", label: "View result" },
+  },
+  {
+    href: "/advanced",
+    num: "03",
+    title: "Advanced Pathway",
+    desc: "React, Next.js, PostGIS & Vercel deployment",
+    result: { href: "/advanced-result", label: "View result" },
+  },
+  {
+    href: "/materials",
+    num: "04",
+    title: "Learning Materials",
+    desc: "Datasets, tools, docs & references",
+    result: null,
+  },
+  {
+    href: "/ai",
+    num: "05",
+    title: "AI & WebGIS",
+    desc: "Use AI as a collaborator — no coding required",
+    result: null,
+  },
 ];
 
 export default function HomePage() {
@@ -54,21 +85,36 @@ export default function HomePage() {
         {/* Right: module list */}
         <nav className="flex-1 flex flex-col divide-y divide-stone-200">
           {MODULES.map((m) => (
-            <Link key={m.href} href={m.href}
-              className="group flex items-center justify-between py-8 hover:pl-4 transition-all duration-150">
-              <div className="flex items-baseline gap-8">
-                <span className="text-sm text-stone-300 font-mono">{m.num}</span>
+            <div key={m.href} className="group flex items-center justify-between py-7">
+
+              {/* Main link */}
+              <Link href={m.href}
+                className="flex items-baseline gap-8 flex-1 hover:pl-2 transition-all duration-150">
+                <span className="text-sm text-stone-300 font-mono flex-shrink-0">{m.num}</span>
                 <div>
                   <p className="text-3xl font-bold text-stone-900 group-hover:text-stone-500 transition-colors">
                     {m.title}
                   </p>
                   <p className="text-sm text-stone-400 mt-1">{m.desc}</p>
                 </div>
+              </Link>
+
+              {/* Right side: result chip + arrow */}
+              <div className="flex items-center gap-4 flex-shrink-0 ml-6">
+                {m.result && (
+                  <Link href={m.result.href}
+                    className="flex items-center gap-1.5 text-[11px] text-stone-400 border border-stone-200 rounded-full px-3 py-1 hover:border-stone-400 hover:text-stone-600 transition-colors whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-stone-300 inline-block" />
+                    {m.result.label}
+                  </Link>
+                )}
+                <Link href={m.href}
+                  className="text-2xl text-stone-300 group-hover:text-stone-600 group-hover:translate-x-2 transition-all">
+                  →
+                </Link>
               </div>
-              <span className="text-2xl text-stone-300 group-hover:text-stone-600 group-hover:translate-x-2 transition-all">
-                →
-              </span>
-            </Link>
+
+            </div>
           ))}
         </nav>
 
