@@ -10,13 +10,9 @@ import * as topojson from "topojson-client";
 type RiskLevel = "Critical" | "High" | "Moderate" | "Low";
 type CityTag   = "Taipei" | "New Taipei";
 
-// Replace Topology import with a minimal inline type
-type TopoJSON = {
-  type: "Topology";
-  objects: Record<string, topojson.Objects>;
-  arcs: number[][][];
-  [key: string]: unknown;
-};
+// Use a loose type to avoid depending on topojson-specification package
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TopoJSON = Record<string, any>;
 
 interface CandidatePoint {
   id: number; name: string; city: CityTag;
@@ -177,7 +173,8 @@ export default function DisasterMap() {
     ]).then(([debris,tF,ntF,taiwan])=>{
       const topo = taiwan as TopoJSON;
       const key  = Object.keys(topo.objects)[0];
-      setTaiwanData(topojson.feature(topo as Parameters<typeof topojson.feature>[0], topo.objects[key]) as FeatureCollection);
+      // Cast through unknown to satisfy the topojson.feature overload
+      setTaiwanData(topojson.feature(topo as unknown as Parameters<typeof topojson.feature>[0], topo.objects[key]) as FeatureCollection);
       setDebrisData(debris); setTaipeiFlood(tF); setNewTaipeiFlood(ntF);
       setLoading(false);
     }).catch(e=>{ setError(e.message); setLoading(false); });
@@ -461,9 +458,9 @@ export default function DisasterMap() {
             </div>
             <div className="space-y-2.5 mb-4">
               {[
-                {label:"Debris density",  sub:`${selected.nearbyDebris} streams · ×0.45`, val:selected.debrisScore, color:"#fb923c"},
-                {label:"Flood zone",       sub:`${selected.inFloodZone?"inside":"outside"} · ×0.35`, val:selected.floodScore, color:"#818cf8"},
-                {label:"Population",       sub:`${selected.population.toLocaleString()} · ×0.20`,    val:selected.popScore,   color:"#a78bfa"},
+                {label:"Debris density", sub:`${selected.nearbyDebris} streams · ×0.45`, val:selected.debrisScore, color:"#fb923c"},
+                {label:"Flood zone",      sub:`${selected.inFloodZone?"inside":"outside"} · ×0.35`, val:selected.floodScore, color:"#818cf8"},
+                {label:"Population",      sub:`${selected.population.toLocaleString()} · ×0.20`,    val:selected.popScore,   color:"#a78bfa"},
               ].map(({label,sub,val,color})=>(
                 <div key={label}>
                   <div className="flex justify-between text-[11px] mb-1">
@@ -478,10 +475,7 @@ export default function DisasterMap() {
               {selected.recommendation}
             </p>
             <button
-              onClick={()=>{
-                // flip sign to force new reference → re-triggers MapController
-                setFlyTarget(prev => prev ? {...selected, id: -(selected.id)} : {...selected});
-              }}
+              onClick={()=> setFlyTarget({...selected, id: selected.id * -1})}
               className="mt-3 w-full flex items-center justify-center gap-1.5 text-[11px] text-white/30 hover:text-white/60 transition-colors py-1.5 rounded-lg border border-white/[0.06] hover:border-white/20"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
