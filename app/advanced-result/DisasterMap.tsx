@@ -5,12 +5,18 @@ import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, useMap } from "r
 import "leaflet/dist/leaflet.css";
 import type { FeatureCollection, Polygon, MultiPolygon, LineString, MultiLineString, Position } from "geojson";
 import * as topojson from "topojson-client";
-import type { Topology } from "topojson-specification";
-import type { Map as LeafletMap } from "leaflet";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type RiskLevel = "Critical" | "High" | "Moderate" | "Low";
 type CityTag   = "Taipei" | "New Taipei";
+
+// Replace Topology import with a minimal inline type
+type TopoJSON = {
+  type: "Topology";
+  objects: Record<string, topojson.Objects>;
+  arcs: number[][][];
+  [key: string]: unknown;
+};
 
 interface CandidatePoint {
   id: number; name: string; city: CityTag;
@@ -160,7 +166,6 @@ export default function DisasterMap() {
   const [tab,        setTab]        = useState<"layers"|"ranking">("layers");
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState<string|null>(null);
-  // flyTo target — separate from selected so clicking the same point again re-triggers
   const [flyTarget,  setFlyTarget]  = useState<RiskPoint|null>(null);
 
   useEffect(()=>{
@@ -170,8 +175,9 @@ export default function DisasterMap() {
       fetch("/advanced-result/data/新北市淹水潛勢圖.geojson").then(r=>r.json()),
       fetch("/advanced-result/data/Taiwan.json").then(r=>r.json()),
     ]).then(([debris,tF,ntF,taiwan])=>{
-      const topo=taiwan as Topology, key=Object.keys(topo.objects)[0];
-      setTaiwanData(topojson.feature(topo,topo.objects[key]) as FeatureCollection);
+      const topo = taiwan as TopoJSON;
+      const key  = Object.keys(topo.objects)[0];
+      setTaiwanData(topojson.feature(topo as Parameters<typeof topojson.feature>[0], topo.objects[key]) as FeatureCollection);
       setDebrisData(debris); setTaipeiFlood(tF); setNewTaipeiFlood(ntF);
       setLoading(false);
     }).catch(e=>{ setError(e.message); setLoading(false); });
@@ -197,10 +203,9 @@ export default function DisasterMap() {
 
   const toggle = (k: keyof typeof layers) => setLayers(p=>({...p,[k]:!p[k]}));
 
-  // Select a point, fly to it, open detail card
   function selectPoint(pt: RiskPoint) {
     setSelected(pt);
-    setFlyTarget({ ...pt, id: pt.id }); // always new object reference → triggers flyTo
+    setFlyTarget({ ...pt });
   }
 
   return (
@@ -211,18 +216,14 @@ export default function DisasterMap() {
 
         {/* Nav links */}
         <div className="flex items-center gap-1 px-4 py-3 border-b border-white/[0.06]">
-          <a href="/"
-            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors group">
-            {/* home icon */}
+          <a href="/" className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span>Home</span>
           </a>
           <span className="text-white/10 mx-1">/</span>
-          <a href="/advanced"
-            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors">
-            {/* document icon */}
+          <a href="/advanced" className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -280,10 +281,10 @@ export default function DisasterMap() {
                   <span className="text-xs text-white/40">County boundaries</span>
                 </div>
                 {([
-                  { key:"debris",  label:"Debris flow streams",        color:"#fb923c" },
-                  { key:"tFlood",  label:"Taipei flood inundation",    color:"#818cf8" },
+                  { key:"debris",  label:"Debris flow streams",         color:"#fb923c" },
+                  { key:"tFlood",  label:"Taipei flood inundation",     color:"#818cf8" },
                   { key:"ntFlood", label:"New Taipei flood inundation", color:"#38bdf8" },
-                  { key:"points",  label:"Risk assessment points",     color:"#f87171" },
+                  { key:"points",  label:"Risk assessment points",      color:"#f87171" },
                 ] as const).map(l=>(
                   <label key={l.key} className="flex items-center gap-2.5 cursor-pointer group">
                     <input type="checkbox" checked={layers[l.key]} onChange={()=>toggle(l.key)}
@@ -356,8 +357,6 @@ export default function DisasterMap() {
       <div className="flex-1 relative">
         <MapContainer center={[25.02,121.52]} zoom={10} className="w-full h-full" style={{background:"#0f1117"}}>
           <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="&copy; CARTO" />
-
-          {/* FlyTo controller */}
           <MapController target={flyTarget} />
 
           {taiwanData && (
@@ -368,7 +367,6 @@ export default function DisasterMap() {
                 l.bindTooltip(name,{permanent:false,direction:"center"});
               }} />
           )}
-
           {debrisData && layers.debris && (
             <GeoJSON key="debris" data={debrisData}
               style={{color:"#fb923c",weight:1.2,opacity:0.7,fillColor:"#fb923c",fillOpacity:0.2}}
@@ -379,7 +377,6 @@ export default function DisasterMap() {
                 }
               }} />
           )}
-
           {taipeiFlood && layers.tFlood && (
             <GeoJSON key="tFlood" data={taipeiFlood}
               style={{color:"#818cf8",weight:0.8,opacity:0.7,fillColor:"#818cf8",fillOpacity:0.3}}
@@ -390,7 +387,6 @@ export default function DisasterMap() {
                 }
               }} />
           )}
-
           {newTaipeiFlood && layers.ntFlood && (
             <GeoJSON key="ntFlood" data={newTaipeiFlood}
               style={{color:"#38bdf8",weight:0.8,opacity:0.7,fillColor:"#38bdf8",fillOpacity:0.3}}
@@ -401,7 +397,6 @@ export default function DisasterMap() {
                 }
               }} />
           )}
-
           {layers.points && displayed.map(pt=>(
             <CircleMarker key={pt.id} center={[pt.lat,pt.lng]}
               radius={pt.risk==="Critical"?10:pt.risk==="High"?8:pt.risk==="Moderate"?6:5}
@@ -418,7 +413,7 @@ export default function DisasterMap() {
                   <div style={{fontSize:11,color:"#888",marginBottom:8}}>{pt.city} · {pt.risk} Risk · Score {pt.score}/100</div>
                   <div style={{background:"#f9f9f9",borderRadius:6,padding:"8px 10px",marginBottom:8}}>
                     {[
-                      {label:`Debris ×0.45`, sub:`${pt.nearbyDebris} streams`,          val:pt.debrisScore},
+                      {label:`Debris ×0.45`, sub:`${pt.nearbyDebris} streams`,           val:pt.debrisScore},
                       {label:`Flood ×0.35`,  sub:pt.inFloodZone?"inside zone":"outside", val:pt.floodScore},
                       {label:`Pop ×0.20`,    sub:pt.population.toLocaleString(),          val:pt.popScore},
                     ].map(({label,sub,val})=>(
@@ -441,7 +436,7 @@ export default function DisasterMap() {
           ))}
         </MapContainer>
 
-        {/* ── Detail card ── */}
+        {/* Detail card */}
         {selected && (
           <div className="absolute bottom-5 right-5 w-72 bg-[#0f1117] border border-white/[0.08] rounded-xl p-4 z-[1000] shadow-2xl">
             <div className="flex items-start justify-between mb-3">
@@ -455,7 +450,6 @@ export default function DisasterMap() {
                   className="text-white/20 hover:text-white/60 text-lg leading-none transition-colors ml-1">×</button>
               </div>
             </div>
-
             <div className="flex items-end gap-3 mb-4">
               <div className="text-4xl font-bold tabular-nums" style={{color:RISK_COLOR[selected.risk]}}>
                 {selected.score}
@@ -465,12 +459,11 @@ export default function DisasterMap() {
                 <div className="text-[10px] text-white/20 mt-1">composite risk score / 100</div>
               </div>
             </div>
-
             <div className="space-y-2.5 mb-4">
               {[
-                {label:"Debris density",  sub:`${selected.nearbyDebris} streams · ×0.45`, val:selected.debrisScore,  color:"#fb923c"},
-                {label:"Flood zone",       sub:`${selected.inFloodZone?"inside":"outside"} · ×0.35`,  val:selected.floodScore,  color:"#818cf8"},
-                {label:"Population",       sub:`${selected.population.toLocaleString()} · ×0.20`,     val:selected.popScore,    color:"#a78bfa"},
+                {label:"Debris density",  sub:`${selected.nearbyDebris} streams · ×0.45`, val:selected.debrisScore, color:"#fb923c"},
+                {label:"Flood zone",       sub:`${selected.inFloodZone?"inside":"outside"} · ×0.35`, val:selected.floodScore, color:"#818cf8"},
+                {label:"Population",       sub:`${selected.population.toLocaleString()} · ×0.20`,    val:selected.popScore,   color:"#a78bfa"},
               ].map(({label,sub,val,color})=>(
                 <div key={label}>
                   <div className="flex justify-between text-[11px] mb-1">
@@ -481,14 +474,14 @@ export default function DisasterMap() {
                 </div>
               ))}
             </div>
-
             <p className="text-[11px] text-white/40 leading-relaxed border-t border-white/[0.06] pt-3">
               {selected.recommendation}
             </p>
-
-            {/* Re-center button */}
             <button
-              onClick={()=>setFlyTarget({...selected, id: -selected.id})}
+              onClick={()=>{
+                // flip sign to force new reference → re-triggers MapController
+                setFlyTarget(prev => prev ? {...selected, id: -(selected.id)} : {...selected});
+              }}
               className="mt-3 w-full flex items-center justify-center gap-1.5 text-[11px] text-white/30 hover:text-white/60 transition-colors py-1.5 rounded-lg border border-white/[0.06] hover:border-white/20"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -500,15 +493,12 @@ export default function DisasterMap() {
           </div>
         )}
 
-        {/* Loading */}
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0f1117]/90 z-[2000]">
             <div className="w-8 h-8 border-2 border-white/20 border-t-white/70 rounded-full animate-spin mx-auto mb-3" />
             <div className="text-sm text-white/50">Loading datasets</div>
           </div>
         )}
-
-        {/* Error */}
         {error && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-2 rounded-lg z-[2000]">
             {error}
