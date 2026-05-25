@@ -1,4 +1,3 @@
-'use client'
 import React, { useState } from 'react';
 
 const sections = [
@@ -395,23 +394,52 @@ export default function NotesPage() {
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans flex flex-col">
-      <header className="sticky top-0 z-50 bg-stone-50 border-b border-stone-200 px-6 py-3 flex items-center gap-3">
-        <span className="text-stone-400 text-sm font-mono">WebGIS Workshop</span>
+
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-50 bg-stone-50 border-b border-stone-200 px-4 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
+        <span className="text-stone-400 text-xs sm:text-sm font-mono hidden xs:inline">WebGIS Workshop</span>
+        <span className="text-stone-400 text-xs sm:text-sm font-mono xs:hidden">WS</span>
         <span className="text-stone-300">/</span>
-        <span className="text-stone-700 text-sm font-semibold">Speaker Notes</span>
-        <span className="ml-auto text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full hidden sm:inline">
+        <span className="text-stone-700 text-xs sm:text-sm font-semibold">Speaker Notes</span>
+        <span className="ml-auto text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded-full hidden md:inline">
           Click any line to highlight
         </span>
       </header>
 
-      <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 53px)' }}>
-        <aside className="w-40 shrink-0 border-r border-stone-200 bg-white flex flex-col py-4 gap-1 px-2 overflow-y-auto">
+      {/* ── Mobile Tab Bar (visible on small screens) ── */}
+      <div className="lg:hidden flex-none border-b border-stone-200 bg-white overflow-x-auto">
+        <div className="flex gap-1 px-3 py-2 min-w-max">
           {sections.map(s => (
-            <button key={s.id}
+            <button
+              key={s.id}
+              onClick={() => { setActiveSection(s.id); setActiveSlide(null); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                activeSection === s.id
+                  ? `${s.color} text-white shadow-sm`
+                  : 'text-stone-500 hover:bg-stone-100 bg-stone-50'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 53px)' }}>
+
+        {/* ── Desktop Sidebar (hidden on mobile) ── */}
+        <aside className="hidden lg:flex w-44 shrink-0 border-r border-stone-200 bg-white flex-col py-4 gap-1 px-2 overflow-y-auto">
+          {sections.map(s => (
+            <button
+              key={s.id}
               onClick={() => { setActiveSection(s.id); setActiveSlide(null); }}
               className={`text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeSection === s.id ? `${s.color} text-white shadow-sm` : 'text-stone-500 hover:bg-stone-100'
-              }`}>
+                activeSection === s.id
+                  ? `${s.color} text-white shadow-sm`
+                  : 'text-stone-500 hover:bg-stone-100'
+              }`}
+            >
               {s.label}
             </button>
           ))}
@@ -420,38 +448,53 @@ export default function NotesPage() {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-4">
-          <div className="flex items-center gap-2 mb-2">
+        {/* ── Main Content ── */}
+        <main className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-3 sm:space-y-4">
+
+          {/* Slide count */}
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-stone-400 font-mono">
               {currentSection?.content.length} slides in this section
             </span>
+            {/* Mobile: hint */}
+            <span className="text-[10px] text-stone-400 md:hidden">tap line to highlight</span>
           </div>
+
           {currentSection?.content.map((slide, si) => {
             const slideKey = `${activeSection}-${si}`;
             const isActive = activeSlide === slideKey;
             return (
-              <div key={si}
-                className={`rounded-2xl border transition-all ${
+              <div
+                key={si}
+                className={`rounded-xl sm:rounded-2xl border transition-all ${
                   isActive ? 'border-amber-300 shadow-md shadow-amber-50' : 'border-stone-200'
-                } bg-white overflow-hidden`}>
+                } bg-white overflow-hidden`}
+              >
+                {/* Card header */}
                 <div
-                  className="flex items-center gap-3 px-5 py-3 border-b border-stone-100 cursor-pointer hover:bg-stone-50"
-                  onClick={() => setActiveSlide(isActive ? null : slideKey)}>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${tagColors[slide.tag] ?? 'bg-stone-100 text-stone-600'}`}>
+                  className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-stone-100 cursor-pointer hover:bg-stone-50 active:bg-stone-100"
+                  onClick={() => setActiveSlide(isActive ? null : slideKey)}
+                >
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${tagColors[slide.tag] ?? 'bg-stone-100 text-stone-600'}`}>
                     {slide.tag}
                   </span>
-                  <span className="text-sm font-semibold text-stone-700 truncate">{slide.title}</span>
+                  <span className="text-xs sm:text-sm font-semibold text-stone-700 truncate">{slide.title}</span>
                   <span className="ml-auto text-stone-300 text-xs shrink-0">{isActive ? '▲' : '▼'}</span>
                 </div>
-                <div className="px-5 py-4 space-y-1.5">
+
+                {/* Card body */}
+                <div className="px-3 sm:px-5 py-3 sm:py-4 space-y-1 sm:space-y-1.5">
                   {slide.lines.map((line, li) => {
-                    if (line.type === 'divider') return <hr key={li} className="border-stone-100 my-3" />;
+                    if (line.type === 'divider') return <hr key={li} className="border-stone-100 my-2 sm:my-3" />;
                     return <LineItem key={li} line={line} />;
                   })}
                 </div>
               </div>
             );
           })}
+
+          {/* Bottom padding for mobile (avoids content hiding behind browser chrome) */}
+          <div className="h-6 lg:hidden" />
         </main>
       </div>
     </div>
@@ -460,34 +503,57 @@ export default function NotesPage() {
 
 function LineItem({ line }: { line: any }) {
   const [highlighted, setHighlighted] = useState(false);
-  const base = "rounded-lg px-4 py-2 text-sm leading-relaxed cursor-pointer select-none transition-all ";
+  const base = "rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm leading-relaxed cursor-pointer select-none transition-all active:scale-[0.99] ";
 
   if (line.type === 'speech') return (
-    <p onClick={() => setHighlighted(h => !h)}
-      className={base + (highlighted ? 'bg-yellow-100 text-stone-800 font-medium ring-1 ring-yellow-300' : 'text-stone-700 hover:bg-stone-50')}>
+    <p
+      onClick={() => setHighlighted(h => !h)}
+      className={base + (highlighted
+        ? 'bg-yellow-100 text-stone-800 font-medium ring-1 ring-yellow-300'
+        : 'text-stone-700 hover:bg-stone-50')}
+    >
       {line.text}
     </p>
   );
+
   if (line.type === 'question') return (
-    <p onClick={() => setHighlighted(h => !h)}
-      className={base + (highlighted ? 'bg-yellow-100 text-sky-800 font-semibold ring-1 ring-yellow-300' : 'text-sky-700 font-medium hover:bg-sky-50 border-l-4 border-sky-300 pl-3')}>
+    <p
+      onClick={() => setHighlighted(h => !h)}
+      className={base + (highlighted
+        ? 'bg-yellow-100 text-sky-800 font-semibold ring-1 ring-yellow-300'
+        : 'text-sky-700 font-medium hover:bg-sky-50 border-l-4 border-sky-300 pl-3')}
+    >
       ❓ {line.text}
     </p>
   );
+
   if (line.type === 'highlight') return (
-    <p onClick={() => setHighlighted(h => !h)}
-      className={base + (highlighted ? 'bg-yellow-200 text-stone-900 font-bold ring-2 ring-yellow-400' : 'bg-amber-50 text-amber-800 font-semibold border-l-4 border-amber-400 pl-3')}>
+    <p
+      onClick={() => setHighlighted(h => !h)}
+      className={base + (highlighted
+        ? 'bg-yellow-200 text-stone-900 font-bold ring-2 ring-yellow-400'
+        : 'bg-amber-50 text-amber-800 font-semibold border-l-4 border-amber-400 pl-3')}
+    >
       ✦ {line.text}
     </p>
   );
+
   if (line.type === 'pause') return (
-    <p className="text-xs text-stone-400 italic px-4 py-1 font-mono">{line.text}</p>
+    <p className="text-[10px] sm:text-xs text-stone-400 italic px-3 sm:px-4 py-1 font-mono">
+      {line.text}
+    </p>
   );
+
   if (line.type === 'step') return (
-    <p onClick={() => setHighlighted(h => !h)}
-      className={base + (highlighted ? 'bg-yellow-100 text-emerald-800 font-semibold ring-1 ring-yellow-300' : 'text-emerald-700 hover:bg-emerald-50 border-l-4 border-emerald-300 pl-3')}>
+    <p
+      onClick={() => setHighlighted(h => !h)}
+      className={base + (highlighted
+        ? 'bg-yellow-100 text-emerald-800 font-semibold ring-1 ring-yellow-300'
+        : 'text-emerald-700 hover:bg-emerald-50 border-l-4 border-emerald-300 pl-3')}
+    >
       → {line.text}
     </p>
   );
+
   return null;
 }
